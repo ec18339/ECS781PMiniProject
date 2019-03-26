@@ -12,6 +12,13 @@ Core functions of application:
 
 - Find a specific player based on his rarity value
 
+## Sample Usage
+
+[Player Search](https://github.com/ec18339/ECS781PMiniProject#player-search)
+[Page Search](https://github.com/ec18339/ECS781PMiniProject#page-search)
+[Rarity Search](https://github.com/ec18339/ECS781PMiniProject#rarity-search)
+[Player by Rarity Search](https://github.com/ec18339/ECS781PMiniProject#player-by-rarity-search)
+
 ### Player Search
 
 Search by passing the name through the url.
