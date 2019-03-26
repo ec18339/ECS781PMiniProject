@@ -70,8 +70,8 @@ def playerLookUp(playerName):
     with sqlite3.connect("playerdata.db") as db:
         cursor = db.cursor()
         cursor.execute("PRAGMA foreign_keys_ = ON")
-        sql = "INSERT INTO players(firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        entryData = (varPlayers['firstName'], varPlayers['lastName'], varPlayers['commonName'], varPlayersAtt[0]['value'], varPlayersAtt[1]['value'], varPlayersAtt[2]['value'], varPlayersAtt[3]['value'], varPlayersAtt[4]['value'], varPlayersAtt[5]['value'], varPlayers['rarityId'])
+        sql = "INSERT INTO players(firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {})"
+        sql = sql.format(varPlayers['firstName'], varPlayers['lastName'], varPlayers['commonName'], varPlayersAtt[0]['value'], varPlayersAtt[1]['value'], varPlayersAtt[2]['value'], varPlayersAtt[3]['value'], varPlayersAtt[4]['value'], varPlayersAtt[5]['value'], varPlayers['rarityId'])
         cursor.execute(sql, entryData)
         db.commit()
     return data
@@ -106,8 +106,8 @@ def pageLookUp(pageNumber):
         with sqlite3.connect("playerdata.db") as db:
             cursor = db.cursor()
             cursor.execute("PRAGMA foreign_keys_ = ON")
-            sql = "INSERT INTO players(firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-            entryData = (varPlayers['firstName'], varPlayers['lastName'], varPlayers['commonName'], varPlayersAtt[0]['value'], varPlayersAtt[1]['value'], varPlayersAtt[2]['value'], varPlayersAtt[3]['value'], varPlayersAtt[4]['value'], varPlayersAtt[5]['value'], varPlayers['rarityId'])
+            sql = "INSERT INTO players(firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {})"
+            sql = sql.format(varPlayers['firstName'], varPlayers['lastName'], varPlayers['commonName'], varPlayersAtt[0]['value'], varPlayersAtt[1]['value'], varPlayersAtt[2]['value'], varPlayersAtt[3]['value'], varPlayersAtt[4]['value'], varPlayersAtt[5]['value'], varPlayers['rarityId'])
             cursor.execute(sql, entryData)
     #print(pageOfPlayers)
     #returns the first player from the api
@@ -144,8 +144,8 @@ def rarityLookUp(rarityIDNo):
         with sqlite3.connect("playerdata.db") as db:
             cursor = db.cursor()
             cursor.execute("PRAGMA foreign_keys_ = ON")
-            sql = "INSERT INTO players(firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-            entryData = (varPlayers['firstName'], varPlayers['lastName'], varPlayers['commonName'], varPlayersAtt[0]['value'], varPlayersAtt[1]['value'], varPlayersAtt[2]['value'], varPlayersAtt[3]['value'], varPlayersAtt[4]['value'], varPlayersAtt[5]['value'], varPlayers['rarityId'])
+            sql = "INSERT INTO players(firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {})"
+            sql = sql.format(varPlayers['firstName'], varPlayers['lastName'], varPlayers['commonName'], varPlayersAtt[0]['value'], varPlayersAtt[1]['value'], varPlayersAtt[2]['value'], varPlayersAtt[3]['value'], varPlayersAtt[4]['value'], varPlayersAtt[5]['value'], varPlayers['rarityId'])
             cursor.execute(sql, entryData)
 
     #print(pageOfPlayers)
@@ -183,12 +183,12 @@ def rarityAndNameLookUp(playerName, rarityIDNo):
         with sqlite3.connect("playerdata.db") as db:
             cursor = db.cursor()
             cursor.execute("PRAGMA foreign_keys_ = ON")
-            sql = "INSERT INTO players(firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-            entryData = (varPlayers['firstName'], varPlayers['lastName'], varPlayers['commonName'], varPlayersAtt[0]['value'], varPlayersAtt[1]['value'], varPlayersAtt[2]['value'], varPlayersAtt[3]['value'], varPlayersAtt[4]['value'], varPlayersAtt[5]['value'], varPlayers['rarityId'])
+            sql = "INSERT INTO players(firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, {}, {}, {}, {}, {}, {}, {}, {}, {})"
+            sql = sql.format(varPlayers['firstName'], varPlayers['lastName'], varPlayers['commonName'], varPlayersAtt[0]['value'], varPlayersAtt[1]['value'], varPlayersAtt[2]['value'], varPlayersAtt[3]['value'], varPlayersAtt[4]['value'], varPlayersAtt[5]['value'], varPlayers['rarityId'])
             cursor.execute(sql, entryData)
     #print(pageOfPlayers)
     #returns the first player from the api
     return data
 
 if __name__=="__main__":
-    app.run(port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080)
