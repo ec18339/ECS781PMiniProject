@@ -8,12 +8,13 @@ requests_cache.install_cache('fut_api_cache', backend='sqlite', expire_after=360
 cluster = Cluster(['cassandra'])
 session = cluster.connect()
 app = Flask(__name__)
+
+#creating keyspace
 session.execute("DROP KEYSPACE IF EXISTS futplayers")
 session.execute("""CREATE KEYSPACE futplayers WITH REPLICATION =
                 {'class' : 'SimpleStrategy', 'replication_factor' : 1}""")
-#database creation sqlite3.connect("playerdata.db")
 
-#db.execute("PRAGMA foreign_keys_ = ON")
+#create the table
 sql = """CREATE TABLE IF NOT EXISTS futplayers.players
          (id INT,
          firstName TEXT,
@@ -34,6 +35,7 @@ session.execute(sql)
 #player = 'https://www.easports.com/fifa/ultimate-team/api/fut/item?name=' + name
 #https://www.easports.com/fifa/ultimate-team/api/fut/item?jsonParamObject=%7B%22ovr%22:%2290:99%22,%22pageSize%22:40,%22position%22:%22LW%22%7D
 
+#url templates
 page_url_template = 'https://www.easports.com/fifa/ultimate-team/api/fut/item?page={page}'
 player_url_template = 'https://www.easports.com/fifa/ultimate-team/api/fut/item?name={name}'
 rarity_url_template = 'https://www.easports.com/fifa/ultimate-team/api/fut/item?rarity={rarityID}'
@@ -43,20 +45,23 @@ rarename_url_template = 'https://www.easports.com/fifa/ultimate-team/api/fut/ite
 #rarities: 0 = common, 1 = rare, 3 = special
 #0 returns all rarities
 
-
+#default page
 @app.route('/',  methods=['GET', 'POST'])
 def home():
     return "Home"
+
 #returns the best version of a player by name
 @app.route('/name/<playerName>',  methods=['GET', 'POST'])
 def playerLookUp(playerName):
     player_url = player_url_template.format(name = playerName)
+    #getting the json
     resp = requests.get(player_url)
     if resp.ok:
         pageOfPlayers = resp.json()
     else:
         print(resp.reason)
 
+    #extracting the relevant variables from the json
     varPlayers = pageOfPlayers['items'][0]
     varPlayersAtt = pageOfPlayers['items'][0]['attributes']
     id = int(varPlayers['id'])
@@ -70,9 +75,8 @@ def playerLookUp(playerName):
     defence = str(varPlayersAtt[4]['value'])
     physical = str(varPlayersAtt[5]['value'])
     rarity = str(varPlayers['rarityId'])
-    #print(pageOfPlayers)
-    #returns the first player from the api
-    #return str(pageOfPlayers['items'][0]['commonName'])
+
+    #structuring html string
     data = """<table style="width:100%">
                 <tr>
                     <th>First name</th>
@@ -87,22 +91,22 @@ def playerLookUp(playerName):
                     <th>Rarity</th>
                 </tr>
                 """
-
+    #outputting data in a table
     data += "<tr>\n"
-    data += "<td>" + firstName + "</td>\n"
-    data += "<td>" + lastName + "</td>\n"
-    data += "<td>" + commonName + "</td>\n"
-    data += "<td>" + str(pace) + "</td>\n"
-    data += "<td>" + str(shooting) + "</td>\n"
-    data += "<td>" + str(passing) + "</td>\n"
-    data += "<td>" + str(dribbling) + "</td>\n"
-    data += "<td>" + str(defence) + "</td>\n"
-    data += "<td>" + str(physical) + "</td>\n"
-    data += "<td>" + str(rarity) + "</td>\n"
+    data += "<td align=\"center\">" + firstName + "</td>\n"
+    data += "<td align=\"center\">" + lastName + "</td>\n"
+    data += "<td align=\"center\">" + commonName + "</td>\n"
+    data += "<td align=\"center\">" + str(pace) + "</td>\n"
+    data += "<td align=\"center\">" + str(shooting) + "</td>\n"
+    data += "<td align=\"center\">" + str(passing) + "</td>\n"
+    data += "<td align=\"center\">" + str(dribbling) + "</td>\n"
+    data += "<td align=\"center\">" + str(defence) + "</td>\n"
+    data += "<td align=\"center\">" + str(physical) + "</td>\n"
+    data += "<td align=\"center\">" + str(rarity) + "</td>\n"
     data += "</tr>\n"
     data += "</table>"
-    #with Cluster(['cassandra']).connect() as db:
-    #db.execute("PRAGMA foreign_keys_ = ON")
+
+    #storing the data from the json into our sql table
     sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
     sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
     session.execute(sql)
@@ -111,6 +115,7 @@ def playerLookUp(playerName):
 #returns a specific page of players
 @app.route('/page/<pageNumber>',  methods=['GET', 'POST'])
 def pageLookUp(pageNumber):
+    #getting the json
     page_url = page_url_template.format(page = pageNumber)
     resp = requests.get(page_url)
     if resp.ok:
@@ -118,6 +123,7 @@ def pageLookUp(pageNumber):
     else:
         print(resp.reason)
 
+    #structuring the html string
     data = """<table style="width:100%">
             <tr>
                 <th>First name</th>
@@ -132,8 +138,11 @@ def pageLookUp(pageNumber):
                 <th>Rarity</th>
             </tr>
             """
+
+    #looping through all the json values as this request will return multiple varPlayers
     for i in range(0,len(pageOfPlayers['items'])):
 
+        #extracting the relevant vales from the json
         varPlayers = pageOfPlayers['items'][i]
         varPlayersAtt = pageOfPlayers['items'][i]['attributes']
         id = int(varPlayers['id'])
@@ -147,24 +156,22 @@ def pageLookUp(pageNumber):
         defence = str(varPlayersAtt[4]['value'])
         physical = str(varPlayersAtt[5]['value'])
         rarity = str(varPlayers['rarityId'])
-        #print(pageOfPlayers)
-        #returns the first player from the api
-        #return str(pageOfPlayers['items'][0]['commonName'])
 
+        #outputting the data as a table
         data += "<tr>\n"
-        data += "<td>" + firstName + "</td>\n"
-        data += "<td>" + lastName + "</td>\n"
-        data += "<td>" + commonName + "</td>\n"
-        data += "<td>" + str(pace) + "</td>\n"
-        data += "<td>" + str(shooting) + "</td>\n"
-        data += "<td>" + str(passing) + "</td>\n"
-        data += "<td>" + str(dribbling) + "</td>\n"
-        data += "<td>" + str(defence) + "</td>\n"
-        data += "<td>" + str(physical) + "</td>\n"
-        data += "<td>" + str(rarity) + "</td>\n"
+        data += "<td align=\"center\">" + firstName + "</td>\n"
+        data += "<td align=\"center\">" + lastName + "</td>\n"
+        data += "<td align=\"center\">" + commonName + "</td>\n"
+        data += "<td align=\"center\">" + str(pace) + "</td>\n"
+        data += "<td align=\"center\">" + str(shooting) + "</td>\n"
+        data += "<td align=\"center\">" + str(passing) + "</td>\n"
+        data += "<td align=\"center\">" + str(dribbling) + "</td>\n"
+        data += "<td align=\"center\">" + str(defence) + "</td>\n"
+        data += "<td align=\"center\">" + str(physical) + "</td>\n"
+        data += "<td align=\"center\">" + str(rarity) + "</td>\n"
         data += "</tr>\n"
-        #with Cluster(['cassandra']).connect() as db:
-        #db.execute("PRAGMA foreign_keys_ = ON")
+
+        #storing the data into the sql table
         sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
         sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
         session.execute(sql)
@@ -175,6 +182,7 @@ def pageLookUp(pageNumber):
 #returns a page of players of a certain rarity
 @app.route('/rarity/<rarityIDNo>',  methods=['GET', 'POST'])
 def rarityLookUp(rarityIDNo):
+    #getting the json
     rarity_url = rarity_url_template.format(rarityID = rarityIDNo)
     resp = requests.get(rarity_url)
     if resp.ok:
@@ -182,6 +190,7 @@ def rarityLookUp(rarityIDNo):
     else:
         print(resp.reason)
 
+    #structuring the html
     data = """<table style="width:100%">
             <tr>
                 <th>First name</th>
@@ -196,8 +205,11 @@ def rarityLookUp(rarityIDNo):
                 <th>Rarity</th>
             </tr>
             """
+
+    #looping through all the json values as this request will return multiple varPlayers
     for i in range(0,len(pageOfPlayers['items'])):
 
+        #extracting the relevant values from the json
         varPlayers = pageOfPlayers['items'][i]
         varPlayersAtt = pageOfPlayers['items'][i]['attributes']
         id = int(varPlayers['id'])
@@ -211,24 +223,22 @@ def rarityLookUp(rarityIDNo):
         defence = str(varPlayersAtt[4]['value'])
         physical = str(varPlayersAtt[5]['value'])
         rarity = str(varPlayers['rarityId'])
-        #print(pageOfPlayers)
-        #returns the first player from the api
-        #return str(pageOfPlayers['items'][0]['commonName'])
 
+        #outputting the data as a table
         data += "<tr>\n"
-        data += "<td>" + firstName + "</td>\n"
-        data += "<td>" + lastName + "</td>\n"
-        data += "<td>" + commonName + "</td>\n"
-        data += "<td>" + str(pace) + "</td>\n"
-        data += "<td>" + str(shooting) + "</td>\n"
-        data += "<td>" + str(passing) + "</td>\n"
-        data += "<td>" + str(dribbling) + "</td>\n"
-        data += "<td>" + str(defence) + "</td>\n"
-        data += "<td>" + str(physical) + "</td>\n"
-        data += "<td>" + str(rarity) + "</td>\n"
+        data += "<td align=\"center\">" + firstName + "</td>\n"
+        data += "<td align=\"center\">" + lastName + "</td>\n"
+        data += "<td align=\"center\">" + commonName + "</td>\n"
+        data += "<td align=\"center\">" + str(pace) + "</td>\n"
+        data += "<td align=\"center\">" + str(shooting) + "</td>\n"
+        data += "<td align=\"center\">" + str(passing) + "</td>\n"
+        data += "<td align=\"center\">" + str(dribbling) + "</td>\n"
+        data += "<td align=\"center\">" + str(defence) + "</td>\n"
+        data += "<td align=\"center\">" + str(physical) + "</td>\n"
+        data += "<td align=\"center\">" + str(rarity) + "</td>\n"
         data += "</tr>\n"
-        #with Cluster(['cassandra']).connect() as db:
-        #db.execute("PRAGMA foreign_keys_ = ON")
+
+        #storing the json values in the sql table
         sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
         sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
         session.execute(sql)
@@ -239,6 +249,7 @@ def rarityLookUp(rarityIDNo):
 #returns a page of players of a certain rarity
 @app.route('/name/<playerName>/rarity/<rarityIDNo>',  methods=['GET', 'POST'])
 def rarityAndNameLookUp(playerName, rarityIDNo):
+    #getting the json
     rarity_name_url = rarename_url_template.format(name = playerName, rarityID = rarityIDNo)
     resp = requests.get(rarity_name_url)
     if resp.ok:
@@ -246,6 +257,7 @@ def rarityAndNameLookUp(playerName, rarityIDNo):
     else:
         print(resp.reason)
 
+    #structuring the html
     data = """<table style="width:100%">
             <tr>
                 <th>First name</th>
@@ -260,8 +272,11 @@ def rarityAndNameLookUp(playerName, rarityIDNo):
                 <th>Rarity</th>
             </tr>
             """
+
+    #looping through all the json values as this request will return multiple varPlayers
     for i in range(0,len(pageOfPlayers['items'])):
 
+        #extracting the relevant values from the json
         varPlayers = pageOfPlayers['items'][i]
         varPlayersAtt = pageOfPlayers['items'][i]['attributes']
         id = int(varPlayers['id'])
@@ -275,24 +290,22 @@ def rarityAndNameLookUp(playerName, rarityIDNo):
         defence = str(varPlayersAtt[4]['value'])
         physical = str(varPlayersAtt[5]['value'])
         rarity = str(varPlayers['rarityId'])
-        #print(pageOfPlayers)
-        #returns the first player from the api
-        #return str(pageOfPlayers['items'][0]['commonName'])
 
+        #outputting the data as a table
         data += "<tr>\n"
-        data += "<td>" + firstName + "</td>\n"
-        data += "<td>" + lastName + "</td>\n"
-        data += "<td>" + commonName + "</td>\n"
-        data += "<td>" + str(pace) + "</td>\n"
-        data += "<td>" + str(shooting) + "</td>\n"
-        data += "<td>" + str(passing) + "</td>\n"
-        data += "<td>" + str(dribbling) + "</td>\n"
-        data += "<td>" + str(defence) + "</td>\n"
-        data += "<td>" + str(physical) + "</td>\n"
-        data += "<td>" + str(rarity) + "</td>\n"
+        data += "<td align=\"center\">" + firstName + "</td>\n"
+        data += "<td align=\"center\">" + lastName + "</td>\n"
+        data += "<td align=\"center\">" + commonName + "</td>\n"
+        data += "<td align=\"center\">" + str(pace) + "</td>\n"
+        data += "<td align=\"center\">" + str(shooting) + "</td>\n"
+        data += "<td align=\"center\">" + str(passing) + "</td>\n"
+        data += "<td align=\"center\">" + str(dribbling) + "</td>\n"
+        data += "<td align=\"center\">" + str(defence) + "</td>\n"
+        data += "<td align=\"center\">" + str(physical) + "</td>\n"
+        data += "<td align=\"center\">" + str(rarity) + "</td>\n"
         data += "</tr>\n"
-        #with Cluster(['cassandra']).connect() as db:
-        #db.execute("PRAGMA foreign_keys_ = ON")
+
+        #storing the data in an sql table
         sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
         sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
         session.execute(sql)
