@@ -14,22 +14,21 @@ app = Flask(__name__)
 #session.execute("DROP KEYSPACE IF EXISTS futplayers")
 #session.execute("""CREATE KEYSPACE futplayers WITH REPLICATION =
 #                {'class' : 'SimpleStrategy', 'replication_factor' : 1}""")
-
+session.execute("""USE futplayers;""")
 #create the table
-#sql = """CREATE TABLE IF NOT EXISTS futplayers.players
-#         (id INT,
-#         firstName TEXT,
-#         lastName TEXT,
-#         commonName TEXT,
-#         pace INT,
-#         shooting INT,
-#         passing INT,
-#         dribbling INT,
-#         defence INT,
-#         physical INT,
-#         rarity INT,
-#         PRIMARY KEY(id));"""
-#session.execute(sql)
+sql = """CREATE TABLE IF NOT EXISTS futplayers.players
+         (id INT PRIMARY KEY,
+         firstName TEXT,
+         lastName TEXT,
+         commonName TEXT,
+         pace INT,
+         shooting INT,
+         passing INT,
+         dribbling INT,
+         defence INT,
+         physical INT,
+         rarity INT);"""
+session.execute(sql)
 
 #page = 'https://www.easports.com/fifa/ultimate-team/api/fut/item?page=' + page
 #rarityid = 'https://www.easports.com/fifa/ultimate-team/api/fut/item?rarityid=' + rarityid
@@ -69,13 +68,13 @@ def playerLookUp(playerName):
     firstName = varPlayers['firstName']
     lastName = varPlayers['lastName']
     commonName = varPlayers['commonName']
-    pace = str(varPlayersAtt[0]['value'])
-    shooting = str(varPlayersAtt[1]['value'])
-    passing = str(varPlayersAtt[3]['value'])
-    dribbling = str(varPlayersAtt[2]['value'])
-    defence = str(varPlayersAtt[4]['value'])
-    physical = str(varPlayersAtt[5]['value'])
-    rarity = str(varPlayers['rarityId'])
+    pace = int(varPlayersAtt[0]['value'])
+    shooting = int(varPlayersAtt[1]['value'])
+    passing = int(varPlayersAtt[3]['value'])
+    dribbling = int(varPlayersAtt[2]['value'])
+    defence = int(varPlayersAtt[4]['value'])
+    physical = int(varPlayersAtt[5]['value'])
+    rarity = int(varPlayers['rarityId'])
 
     #structuring html string
     data = """<table style="width:100%">
@@ -108,9 +107,9 @@ def playerLookUp(playerName):
     data += "</table>"
 
     #storing the data from the json into our sql table
-    #sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
-    #sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
-    #session.execute(sql)
+    sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
+    sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
+    session.execute(sql)
     return data
 
 #returns a specific page of players
@@ -150,13 +149,13 @@ def pageLookUp(pageNumber):
         firstName = varPlayers['firstName']
         lastName = varPlayers['lastName']
         commonName = varPlayers['commonName']
-        pace = str(varPlayersAtt[0]['value'])
-        shooting = str(varPlayersAtt[1]['value'])
-        passing = str(varPlayersAtt[3]['value'])
-        dribbling = str(varPlayersAtt[2]['value'])
-        defence = str(varPlayersAtt[4]['value'])
-        physical = str(varPlayersAtt[5]['value'])
-        rarity = str(varPlayers['rarityId'])
+        pace = varPlayersAtt[0]['value']
+        shooting = varPlayersAtt[1]['value']
+        passing = varPlayersAtt[3]['value']
+        dribbling = varPlayersAtt[2]['value']
+        defence = varPlayersAtt[4]['value']
+        physical = varPlayersAtt[5]['value']
+        rarity = varPlayers['rarityId']
 
         #outputting the data as a table
         data += "<tr>\n"
@@ -217,13 +216,13 @@ def rarityLookUp(rarityIDNo):
         firstName = varPlayers['firstName']
         lastName = varPlayers['lastName']
         commonName = varPlayers['commonName']
-        pace = str(varPlayersAtt[0]['value'])
-        shooting = str(varPlayersAtt[1]['value'])
-        passing = str(varPlayersAtt[3]['value'])
-        dribbling = str(varPlayersAtt[2]['value'])
-        defence = str(varPlayersAtt[4]['value'])
-        physical = str(varPlayersAtt[5]['value'])
-        rarity = str(varPlayers['rarityId'])
+        pace = varPlayersAtt[0]['value']
+        shooting = varPlayersAtt[1]['value']
+        passing = varPlayersAtt[3]['value']
+        dribbling = varPlayersAtt[2]['value']
+        defence = varPlayersAtt[4]['value']
+        physical = varPlayersAtt[5]['value']
+        rarity = varPlayers['rarityId']
 
         #outputting the data as a table
         data += "<tr>\n"
@@ -284,13 +283,13 @@ def rarityAndNameLookUp(playerName, rarityIDNo):
         firstName = varPlayers['firstName']
         lastName = varPlayers['lastName']
         commonName = varPlayers['commonName']
-        pace = str(varPlayersAtt[0]['value'])
-        shooting = str(varPlayersAtt[1]['value'])
-        passing = str(varPlayersAtt[3]['value'])
-        dribbling = str(varPlayersAtt[2]['value'])
-        defence = str(varPlayersAtt[4]['value'])
-        physical = str(varPlayersAtt[5]['value'])
-        rarity = str(varPlayers['rarityId'])
+        pace = varPlayersAtt[0]['value']
+        shooting = varPlayersAtt[1]['value']
+        passing = varPlayersAtt[3]['value']
+        dribbling = varPlayersAtt[2]['value']
+        defence = varPlayersAtt[4]['value']
+        physical = varPlayersAtt[5]['value']
+        rarity = varPlayers['rarityId']
 
         #outputting the data as a table
         data += "<tr>\n"
@@ -335,31 +334,31 @@ def minStat(stat, value):
     rows = session.execute( """Select * From futplayers.players
                             where {} > {} ALLOW FILTERING;""".format(stat, value))
     for playerItem in rows:
-        firstName = playerItem.firstName
-        lastName = playerItem.lastName
-        commonName = playerItem.commonName
-        pace = playerItem.pace
-        shooting = playerItem.shooting
-        passing = playerItem.passing
-        dribbling = str(varPlayersAtt[2]['value'])
-        defence = str(varPlayersAtt[4]['value'])
-        physical = str(varPlayersAtt[5]['value'])
-        rarity = str(varPlayers['rarityId'])
+	#cassandra lists the table columns in alphabetical order by default
+        firstName = str(playerItem[4])
+        lastName = str(playerItem[5])
+        commonName = str(playerItem[1])
+        pace = str(playerItem[6])
+        shooting = str(playerItem[10])
+        passing = str(playerItem[7])
+        dribbling = str(playerItem[3])
+        defence = str(playerItem[2])
+        physical = str(playerItem[8])
+        rarity = str(playerItem[9])
         data += "<tr>\n"
-        data += "<td>" + firstName + "</td>\n"
-        data += "<td>" + lastName + "</td>\n"
-        data += "<td>" + commonName + "</td>\n"
-        data += "<td>" + str(pace) + "</td>\n"
-        data += "<td>" + str(shooting) + "</td>\n"
-        data += "<td>" + str(passing) + "</td>\n"
-        data += "<td>" + str(dribbling) + "</td>\n"
-        data += "<td>" + str(defence) + "</td>\n"
-        data += "<td>" + str(physical) + "</td>\n"
-        data += "<td>" + str(rarity) + "</td>\n"
+        data += "<td align=\"center\">" + firstName + "</td>\n"
+        data += "<td align=\"center\">" + lastName + "</td>\n"
+        data += "<td align=\"center\">" + commonName + "</td>\n"
+        data += "<td align=\"center\">" + pace + "</td>\n"
+        data += "<td align=\"center\">" + shooting + "</td>\n"
+        data += "<td align=\"center\">" + passing + "</td>\n"
+        data += "<td align=\"center\">" + dribbling + "</td>\n"
+        data += "<td align=\"center\">" + defence + "</td>\n"
+        data += "<td align=\"center\">" + physical + "</td>\n"
+        data += "<td align=\"center\">" + rarity + "</td>\n"
         data += "</tr>\n"
     data += "</table>"
     return data
 
 if __name__=="__main__":
     app.run(host='0.0.0.0', port=8080)
-
