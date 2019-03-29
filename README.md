@@ -95,6 +95,42 @@ requests
 requests_cache
 cassandra-driver
 ~~~
+
+It may be required to create the Keyspace on the Cassandra node first. 
+If so, the following lines of SQL are used inside CQLSH.
+
+This command is to run CQLSH in a cassandra node.
+~~~
+kubectl exec -it cassandra-[node] cqlsh
+~~~
+And this is to create the Keyspace and the table.
+~~~
+DROP KEYSPACE IF EXISTS futplayers;
+CREATE KEYSPACE futplayers WITH REPLICATION =
+{'class' : 'SimpleStrategy', 'replication_factor' : 1}; 
+
+CREATE TABLE IF NOT EXISTS futplayers.players
+         (id INT PRIMARY KEY,
+         firstName TEXT,
+         lastName TEXT,
+         commonName TEXT,
+         pace INT,
+         shooting INT,
+         passing INT,
+         dribbling INT,
+         defence INT,
+         physical INT,
+         rarity INT);
+~~~
+
+The database can be tested with the [playersdb.csv](https://github.com/ec18339/ECS781PMiniProject/blob/master/playersdb.csv) file provided.
+The following lines will copy the csv to the node, and will copy the contents into the table.
+~~~
+kubectl cp playersdb.csv cassandra-[node]:/playersdb.csv
+COPY futplayers.players(id,firstName,lastName,commonName,pace,shooting,passing,dribbling,defence,physical,rarity) FROM '/playersdb.csv'
+WITH DELIMITER=',' AND HEADER=TRUE;
+~~~
+
 Next, build the image and push it to the Google repository.
 ~~~
 docker build -t gcr.io/${PROJECT_ID}/miniproject-app:v1 .
@@ -108,10 +144,6 @@ kubectl run miniproject-app --image=gcr.io/${PROJECT_ID}/miniproject-app:v1 --po
 kubectl expose deployment miniproject-app --type=LoadBalancer --port 80 --target-port 8080
 ~~~
 
-This command is to run cqlsh in a cassandra node.
-~~~
-kubectl exec -it cassandra-[node] cqlsh
-~~~
 ### Player Search
 
 Search by passing the name through the url.
