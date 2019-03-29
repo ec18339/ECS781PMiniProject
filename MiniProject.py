@@ -7,28 +7,29 @@ import sqlite3
 requests_cache.install_cache('fut_api_cache', backend='sqlite', expire_after=36000)
 cluster = Cluster(['cassandra'])
 session = cluster.connect()
+
 app = Flask(__name__)
 
 #creating keyspace
-session.execute("DROP KEYSPACE IF EXISTS futplayers")
-session.execute("""CREATE KEYSPACE futplayers WITH REPLICATION =
-                {'class' : 'SimpleStrategy', 'replication_factor' : 1}""")
+#session.execute("DROP KEYSPACE IF EXISTS futplayers")
+#session.execute("""CREATE KEYSPACE futplayers WITH REPLICATION =
+#                {'class' : 'SimpleStrategy', 'replication_factor' : 1}""")
 
 #create the table
-sql = """CREATE TABLE IF NOT EXISTS futplayers.players
-         (id INT,
-         firstName TEXT,
-         lastName TEXT,
-         commonName TEXT,
-         pace INT,
-         shooting INT,
-         passing INT,
-         dribbling INT,
-         defence INT,
-         physical INT,
-         rarity INT,
-         PRIMARY KEY(id));"""
-session.execute(sql)
+#sql = """CREATE TABLE IF NOT EXISTS futplayers.players
+#         (id INT,
+#         firstName TEXT,
+#         lastName TEXT,
+#         commonName TEXT,
+#         pace INT,
+#         shooting INT,
+#         passing INT,
+#         dribbling INT,
+#         defence INT,
+#         physical INT,
+#         rarity INT,
+#         PRIMARY KEY(id));"""
+#session.execute(sql)
 
 #page = 'https://www.easports.com/fifa/ultimate-team/api/fut/item?page=' + page
 #rarityid = 'https://www.easports.com/fifa/ultimate-team/api/fut/item?rarityid=' + rarityid
@@ -107,9 +108,9 @@ def playerLookUp(playerName):
     data += "</table>"
 
     #storing the data from the json into our sql table
-    sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
-    sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
-    session.execute(sql)
+    #sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
+    #sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
+    #session.execute(sql)
     return data
 
 #returns a specific page of players
@@ -172,9 +173,9 @@ def pageLookUp(pageNumber):
         data += "</tr>\n"
 
         #storing the data into the sql table
-        sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
-        sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
-        session.execute(sql)
+        #sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
+        #sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
+        #session.execute(sql)
 
     data += "</table>"
     return data
@@ -239,9 +240,9 @@ def rarityLookUp(rarityIDNo):
         data += "</tr>\n"
 
         #storing the json values in the sql table
-        sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
-        sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
-        session.execute(sql)
+        #sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
+        #sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
+        #session.execute(sql)
 
     data += "</table>"
     return data
@@ -306,12 +307,59 @@ def rarityAndNameLookUp(playerName, rarityIDNo):
         data += "</tr>\n"
 
         #storing the data in an sql table
-        sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
-        sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
-        session.execute(sql)
+        #sql = "INSERT INTO futplayers.players(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity) VALUES ({}, '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {});"
+        #sql = sql.format(id, firstName, lastName, commonName, pace, shooting, passing, dribbling, defence, physical, rarity)
+        #session.execute(sql)
 
+    data += "</table>"
+    return data
+
+
+#returns a page of players from database
+@app.route('/min/<stat>/<value>',  methods=['GET', 'POST'])
+def minStat(stat, value):
+    data = """<table style="width:100%">
+            <tr>
+                <th>First name</th>
+                <th>Last name</th>
+                <th>Common name</th>
+                <th>Pace</th>
+                <th>Shooting</th>
+                <th>Passing</th>
+                <th>Dribbling</th>
+                <th>Defence</th>
+                <th>Physical</th>
+                <th>Rarity</th>
+            </tr>
+            """
+    rows = session.execute( """Select * From futplayers.players
+                            where {} > {} ALLOW FILTERING;""".format(stat, value))
+    for playerItem in rows:
+        firstName = playerItem.firstName
+        lastName = playerItem.lastName
+        commonName = playerItem.commonName
+        pace = playerItem.pace
+        shooting = playerItem.shooting
+        passing = playerItem.passing
+        dribbling = str(varPlayersAtt[2]['value'])
+        defence = str(varPlayersAtt[4]['value'])
+        physical = str(varPlayersAtt[5]['value'])
+        rarity = str(varPlayers['rarityId'])
+        data += "<tr>\n"
+        data += "<td>" + firstName + "</td>\n"
+        data += "<td>" + lastName + "</td>\n"
+        data += "<td>" + commonName + "</td>\n"
+        data += "<td>" + str(pace) + "</td>\n"
+        data += "<td>" + str(shooting) + "</td>\n"
+        data += "<td>" + str(passing) + "</td>\n"
+        data += "<td>" + str(dribbling) + "</td>\n"
+        data += "<td>" + str(defence) + "</td>\n"
+        data += "<td>" + str(physical) + "</td>\n"
+        data += "<td>" + str(rarity) + "</td>\n"
+        data += "</tr>\n"
     data += "</table>"
     return data
 
 if __name__=="__main__":
     app.run(host='0.0.0.0', port=8080)
+
