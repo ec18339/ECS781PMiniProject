@@ -1,8 +1,8 @@
 # ECS781PMiniProject
-Cloud Computing Coursework
+# Cloud Computing Coursework
 ===============================
 
-Core functions of application:
+### Core functions of application:
 
 - Find a player in the FUT Database by name.
 
@@ -18,6 +18,8 @@ Core functions of application:
 
 ## Sample Usage
 
+[Deployment](https://github.com/ec18339/ECS781PMiniProject#player-by-rarity-search)
+
 [Player Search](https://github.com/ec18339/ECS781PMiniProject#player-search)
 
 [Page Search](https://github.com/ec18339/ECS781PMiniProject#page-search)
@@ -27,6 +29,89 @@ Core functions of application:
 [Player by Rarity Search](https://github.com/ec18339/ECS781PMiniProject#player-by-rarity-search)
 
 
+
+### Deployment
+
+To deploy the app:
+
+Set the project ID:
+~~~
+gcloud config set project MY_PROJECT_ID
+~~~
+Set the timezone and export the project ID to a variable for convenience.
+~~~
+gcloud config set compute/zone europe-west2-b
+export PROJECT_ID="$(gcloud config get-value project -q)"
+~~~
+
+Firstly, you must pull the latest docker image:
+~~~
+docker pull cassandra:latest
+~~~
+Then run an instance of the Cassandra in the docker:
+~~~
+docker run --name cassandra-test -d cassandra:latest
+~~~
+Then create a 3 node cluster called 'cassandra'. Note that the Google container API must be enabled. 
+This can be done within the console settings or by running:
+~~~
+gcloud services enable container.googleapis.com
+gcloud container clusters create cassandra --num-nodes=3 --machine-type "n1-standard-2"
+~~~
+Then the cassandra services must be downloaded:
+~~~
+wget -O cassandra-peer-service.yml http://tinyurl.com/yyxnephy
+wget -O cassandra-service.yml http://tinyurl.com/y65czz8e
+wget -O cassandra-replication-controller.yml http://tinyurl.com/y2crfsl8
+~~~
+
+And then run the downloaded services to form the ring.
+~~~
+kubectl create -f cassandra-peer-service.yml
+kubectl create -f cassandra-service.yml
+kubectl create -f cassandra-replication-controller.yml
+~~~
+
+Once the container is working, the nodes can be scaled up.
+~~~
+kubectl scale rc cassandra --replicas=3
+~~~
+
+Then create the requirements.txt file and the Dockerfile if it does not exist already.
+The Dockerfile will look like this:
+~~~
+FROM python:3.7-alpine
+WORKDIR /[working directory]
+COPY /[working directory]
+RUN pip install -U -r requirements.txt
+EXPOSE 8080
+CMD ["python", "MiniProject.py"]
+~~~
+And the requirements.txt file will look like this:
+~~~
+pip
+Flask
+requests
+requests_cache
+cassandra-driver
+~~~
+Next, build the image and push it to the Google repository.
+~~~
+docker build -t gcr.io/${PROJECT_ID}/miniproject-app:v1 .
+docker push gcr.io/${PROJECT_ID}/miniproject-app:v1
+~~~
+
+
+Then run the service and expose it to receive an external IP address.
+~~~
+kubectl run miniproject-app --image=gcr.io/${PROJECT_ID}/miniproject-app:v1 --port 8080
+kubectl expose deployment miniproject-app --type=LoadBalancer --port 80 --target-port 8080
+~~~
+
+This command is to run cqlsh in a cassandra node.
+~~~
+kubectl exec -it cassandra-[node] cqlsh
+~~~
 ### Player Search
 
 Search by passing the name through the url.
@@ -50,5 +135,15 @@ Example: /rarity/1
 Search by passing the name through the url.
 
 Example: /name/neymar/rarity/3
+
+### Cleaning up:
+~~~
+kubectl delete --all replicationcontroller
+
+kubectl delete --all services
+kubectl delete deployment miniproject-app
+
+gcloud container clusters delete cassandra
+~~~
 
 
